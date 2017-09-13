@@ -209,10 +209,14 @@ Aotoo.extend('router', function(opts, utile){
         pre = _leftStack.length ? _leftStack[_leftStack.length-1] : '';
       }
       
-      if (pre && pre.id !== id) {
-        this.prePageInfo = pre
-        preContent = this.getRealContent(this.getContent(pre.id))
-        prePage = <div key={utile.uniqueId('Router_Single_')} className={boxCls+animateout}>{preContent}</div>
+      if (this.state.animate !== 'fade') {
+        if (pre && pre.id !== id) {
+          this.prePageInfo = pre
+          preContent = this.getRealContent(this.getContent(pre.id))
+          prePage = <div key={utile.uniqueId('Router_Single_')} className={boxCls+animateout}>{preContent}</div>
+        }
+      } else {
+        prePage = <div key={utile.uniqueId('Router_Single_')} className={boxCls+animateout} />
       }
       
       const oriContent = this.getContent(id)

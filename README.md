@@ -20,6 +20,32 @@ require('aotoo-web-widgets')
 require('aotoo-react-router')
 
 
+// page
+const WrapElement = Aotoo.wrap(
+  <div>这个真好吃</div>, {
+    rendered: function(dom){ },
+    leave: function(){ }
+  }
+)
+
+
+// page
+const forLeave = function(rter){
+  console.log(rter);
+  return {
+    main: function(){
+      return <div>来了, forLeave</div>
+    },
+    enter: function(){
+      return this.main()
+    },
+    leave: function(){
+      console.log('======= 3333');
+    }
+  }
+}
+
+
 // 路由配置信息
 // 支持树形菜单
 // title: 菜单选项
