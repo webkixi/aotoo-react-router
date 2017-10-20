@@ -1,6 +1,6 @@
 {
   "name": "aotoo-react-router",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "aotoo fed router for SPA",
   "main": "./build/index.js",
   "devDependencies": {
@@ -30,6 +30,6 @@
   "homepage": "https://github.com/webkixi/aotoo-react-router#readme",
   "dependencies": {
     "aotoo-mixins-iscroll": "^1.0.4",
-    "aotoo-react-tabs": "^1.0.0"
+    "aotoo-react-tabs": "^1.0.6"
   }
 }
