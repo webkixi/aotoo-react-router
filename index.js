@@ -26,7 +26,7 @@ function pushState(props, nohash){
 let _history = []
 let _historyCount = 0
 let _leftStack = []
-const animatecss = {
+let animatecss = {
 	fade: {
 		in: ' fadeIn animated-faster',
 		rein: ' fadeIn animated-fastest',
@@ -57,6 +57,11 @@ Aotoo.extend('router', function(opts, utile){
     }
   }
   opts = utile.merge(dft, opts)
+
+  if (opts.animatecss) {
+    animatecss = utile.merge(animatecss, opts.animatecss)
+    delete opts.animatecss
+  }
 
   const rootUrl = location.href.split('#')[0]
   class Router extends Tabs {
