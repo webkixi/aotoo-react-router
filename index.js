@@ -258,7 +258,7 @@ Aotoo.extend('router', function(opts, utile){
     }
 
     componentDidUpdate(prevProps, prevState) {
-      this.leaveContent()
+      // this.leaveContent()
     }
 
     render(){
