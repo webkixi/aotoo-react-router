@@ -295,8 +295,8 @@ Aotoo.extend('router', function(opts, utile){
       state.select = opts.select
 
       // selectData
-      if (opts.data) {
-        state.selectData = opts.data
+      if (opts.selectData) {
+        state.selectData = opts.selectData
       }
 
       if (opts.direction) {
