@@ -129,12 +129,13 @@ Aotoo.extend('router', function(opts, utile){
       }
     }
 
-    historyPush(props){
+    historyPush(props) {
       if (this.state.flag) {
         const curHistoryState = window.history.state
         pushState({
           index: props.index,
           key: props.key,
+          path: props.key,
           data: props.data,
           rootUrl: this.state.rootUrl,
           preState: curHistoryState,
@@ -142,13 +143,17 @@ Aotoo.extend('router', function(opts, utile){
           flag: this.state.flag
         })
       } else {
-        pushState({rootUrl: this.state.rootUrl, flag: this.state.flag}, true)
+        pushState({
+          rootUrl: this.state.rootUrl,
+          flag: this.state.flag
+        }, true)
       }
 
-      const preState = _history[_history.length-1]
+      const preState = _history[_history.length - 1]
       _history.push({
         index: props.index,
         key: props.key,
+        path: props.key,
         data: props.data,
         preState: preState,
         timeLine: _historyCount
