@@ -207,13 +207,9 @@ Aotoo.extend('router', function(opts, utile){
 
     getPage(boxCls){
       const id = this.state.select
-      let animatein = this.animatein
-      let animateout = this.animateout
       let pre, preId, prePage, preContent
 
       if (this.state.direction == 'back') {
-        animateout = this.animateback
-        animatein =  this.animaterein
         pre = _leftStack.pop()
       } else {
         pre = _leftStack.length ? _leftStack[_leftStack.length-1] : '';
@@ -223,15 +219,20 @@ Aotoo.extend('router', function(opts, utile){
         if (pre && pre.id !== id) {
           this.prePageInfo = pre
           preContent = this.getRealContent(this.getContent(pre.id))
-          prePage = <div key={utile.uniqueId('Router_Single_')} className={boxCls+animateout}>{preContent}</div>
+          prePage = <div ref='prePage' key={utile.uniqueId('Router_Single_')} className={boxCls}>{preContent}</div>
         }
       } else {
-        prePage = <div key={utile.uniqueId('Router_Single_')} className={boxCls+animateout} />
+        prePage = <div ref='prePage' key={utile.uniqueId('Router_Single_')} className={boxCls} />
       }
       
       const oriContent = this.getContent(id)
       const content = this.getRealContent(oriContent)
-      const curPage = <div key={utile.uniqueId('Router_Single_')} className={boxCls+animatein}>{content}</div>
+      const curPage = <div 
+          ref="curPage" 
+          key={utile.uniqueId('Router_Single_')} 
+          className={boxCls}>
+          {content}
+        </div>
 
       _leftStack.push({
         id: id,
@@ -259,6 +260,20 @@ Aotoo.extend('router', function(opts, utile){
     }
 
     componentDidMount() {
+      let animatein = this.animatein
+      let animateout = this.animateout
+      if (this.state.direction == 'back') {
+        animateout = this.animateback
+        animatein = this.animaterein
+      }
+      const curPageDom = this.refs.curPage
+      const prePageDom = this.refs.prePage
+      if (curPageDom) {
+        curPageDom.classList.value += animatein
+      }
+      if (prePageDom) {
+        prePageDom.classList.value += animateout
+      }
       this.leaveContent()
     }
 
