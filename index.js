@@ -283,7 +283,8 @@ Aotoo.extend('router', function(opts, utile){
 
     render(){
       const cls = !this.props.routerClass ? 'routerGroup ' : 'routerGroup ' + this.props.routerClass
-      const boxes_cls = !this.props.mulitple ? 'routerBoxes' : 'routerBoxes mulitple'
+      // const boxes_cls = !this.props.mulitple ? 'routerBoxes boxleft' : 'routerBoxes mulitple'
+      const boxes_cls = !this.props.mulitple ? (this.props.animate == 'left' ? 'routerBoxes boxLeft' : this.props.animate == 'right' ? 'routerBoxes boxRight' : 'routerBoxes') : 'routerBoxes mulitple'
 
       const jsxMenu = this.saxer.get().MenuJsx
       const content = this.getPage(boxes_cls)
