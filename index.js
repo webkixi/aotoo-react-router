@@ -208,7 +208,19 @@ Aotoo.extend('router', function(opts, utile){
     getPage(boxCls){
       const id = this.state.select
       let pre, preId, prePage, preContent
-
+      const oriContent = this.getContent(id)
+      const content = this.getRealContent(oriContent)
+      
+      if (this.state.direction == 'jumpback') {
+        pre = _leftStack.length ? _leftStack[_leftStack.length - 1] : '';
+        let rightIndex = _.findLastIndex(_history, function(o) { return o.index == id })
+        if (rightIndex > -1) {
+          rightIndex += 1
+          _history = _history.slice(0, rightIndex) 
+          _leftStack = _leftStack.slice(0, (rightIndex) )
+        }
+      }
+      else 
       if (this.state.direction == 'back') {
         pre = _leftStack.pop()
       } else {
@@ -225,20 +237,22 @@ Aotoo.extend('router', function(opts, utile){
         prePage = <div ref='prePage' key={utile.uniqueId('Router_Single_')} className={boxCls} />
       }
       
-      const oriContent = this.getContent(id)
-      const content = this.getRealContent(oriContent)
+      
       const curPage = <div 
           ref="curPage" 
           key={utile.uniqueId('Router_Single_')} 
           className={boxCls}>
           {content}
         </div>
-
-      _leftStack.push({
-        id: id,
-        content: content,
-        origin: oriContent
-      })
+      
+      // 下面的部分有顺序要求，不能随意放置
+      if (this.state.direction == 'goto') {
+        _leftStack.push({
+          id: id,
+          content: content,
+          origin: oriContent
+        })
+      }
 
       return [
         prePage,
@@ -262,7 +276,7 @@ Aotoo.extend('router', function(opts, utile){
     componentDidMount() {
       let animatein = this.animatein
       let animateout = this.animateout
-      if (this.state.direction == 'back') {
+      if (this.state.direction == 'back' || this.state.direction == 'jumpback' ) {
         animateout = this.animateback
         animatein = this.animaterein
       }
@@ -283,7 +297,7 @@ Aotoo.extend('router', function(opts, utile){
 
     render(){
       const cls = !this.props.routerClass ? 'routerGroup ' : 'routerGroup ' + this.props.routerClass
-      // const boxes_cls = !this.props.mulitple ? 'routerBoxes boxleft' : 'routerBoxes mulitple'
+      // const boxes_cls = !this.props.mulitple ? 'routerBoxes' : 'routerBoxes mulitple'
       const boxes_cls = !this.props.mulitple ? (this.props.animate == 'left' ? 'routerBoxes boxLeft' : this.props.animate == 'right' ? 'routerBoxes boxRight' : 'routerBoxes') : 'routerBoxes mulitple'
 
       const jsxMenu = this.saxer.get().MenuJsx
@@ -381,7 +395,7 @@ Aotoo.extend('router', function(opts, utile){
         this.$select({
           select: target.index,
           selectData: data,
-          direction: 'back'
+          direction: 'jumpback'
         })
       } else {
         const whereBack = this.emit('historypop')
