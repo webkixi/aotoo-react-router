@@ -355,6 +355,9 @@ Aotoo.extend('router', function(opts, utile){
 
   // const router = Aotoo(Tabs, Action, dft)
   const router = Aotoo(Router, Action, dft)
+  router.condition = {
+    preback: 'preback'
+  }
   
   router.saxer.append({
     InstanceContext: router
@@ -389,12 +392,25 @@ Aotoo.extend('router', function(opts, utile){
       })
     },
     back: function(where, data){
+      let condition = {}
+      if (this.hasOn('preback')) {
+        const h = _history[_history.length-1]
+        const whereami = {
+          index: h.index,
+          path: h.path,
+          data: h.data,
+          pre: h.preState,
+          flag: h.flag
+        }
+        condition = this.emit('preback', whereami)
+        if (!condition) return 
+      }
       if (where) {
         if (typeof where != 'string') return 
         const target = this.getWhereInfo(where)
         this.$select({
           select: target.index,
-          selectData: data,
+          selectData: utile.merge({}, data, condition),
           direction: 'jumpback'
         })
       } else {
@@ -411,7 +427,7 @@ Aotoo.extend('router', function(opts, utile){
         if (whereBack) {
           this.$select({
             select: whereBack.index,
-            selectData: whereBack.data,
+            selectData: utile.merge({}, whereBack.data, condition),
             direction: 'back'
           })
           return whereBack
