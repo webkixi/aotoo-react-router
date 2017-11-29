@@ -23,6 +23,50 @@ function pushState(props, nohash){
   window.history.pushState(props, '', uri)
 }
 
+function _lru(max) {
+  //https://github.com/dominictarr/hashlru
+  if (!max) throw Error('hashlru must have a max value, of type number, greater than 0')
+  var size = 0, cache = Object.create(null), _cache = Object.create(null)
+  function update(key, value) {
+    cache[key] = value
+    size++
+    if (size >= max) {
+      size = 0
+      _cache = cache
+      cache = Object.create(null)
+    }
+  }
+  return {
+    has: function (key) {
+      return cache[key] !== undefined || _cache[key] !== undefined
+    },
+    remove: function (key) {
+      if (cache[key] !== undefined)
+        cache[key] = undefined
+      if (_cache[key] !== undefined)
+        _cache[key] = undefined
+    },
+    get: function (key) {
+      var v = cache[key]
+      if (v !== undefined) return v
+      if (v = _cache[key]) {
+        update(key, v)
+        return v
+      }
+    },
+    set: function (key, value) {
+      if (cache[key] !== undefined) cache[key] = value
+      else update(key, value)
+    },
+    clear: function () {
+      cache = Object.create(null)
+      _cache = Object.create(null)
+    }
+  }
+}
+
+
+let lru = _lru(50)
 let _history = []
 let _historyCount = 0
 let _leftStack = []
@@ -208,10 +252,17 @@ Aotoo.extend('router', function(opts, utile){
     getPage(boxCls){
       const id = this.state.select
       let pre, preId, prePage, preContent
-      const oriContent = this.getContent(id)
-      const content = this.getRealContent(oriContent)
+      let oriContent, content
+      oriContent = this.getContent(id)
+      content = this.getRealContent(oriContent)
       
       if (this.state.direction == 'jumpback') {
+        // content = lru.get(id)
+        // if (!content) {
+        //   oriContent = this.getContent(id)
+        //   content = this.getRealContent(oriContent)
+        // }
+
         pre = _leftStack.length ? _leftStack[_leftStack.length - 1] : '';
         let rightIndex = _.findLastIndex(_history, function(o) { return o.index == id })
         if (rightIndex > -1) {
@@ -229,9 +280,15 @@ Aotoo.extend('router', function(opts, utile){
       
       if (this.state.animate !== 'fade') {
         if (pre && pre.id !== id) {
-          this.prePageInfo = pre
+          // this.prePageInfo = pre
           // preContent = this.getRealContent(this.getContent(pre.id))
-          preContent = pre.content
+
+          this.prePageInfo = pre
+          preContent = lru.get(pre.id)
+          if (!preContent) {
+            preContent = this.getRealContent(this.getContent(pre.id))
+          }
+
           prePage = <div ref='prePage' key={utile.uniqueId('Router_Single_')} className={boxCls}>{preContent}</div>
         }
       } else {
@@ -250,10 +307,12 @@ Aotoo.extend('router', function(opts, utile){
       if (this.state.direction == 'goto') {
         _leftStack.push({
           id: id,
-          content: content,
-          origin: oriContent
+          // origin: oriContent
+          // content: content,
         })
       }
+
+      lru.set(id, content)
 
       return [
         prePage,
