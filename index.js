@@ -230,9 +230,22 @@ Aotoo.extend('router', function(opts, utile){
       return rightState
     }
 
-    getRealContent(cnt){
+    getRealContent(cnt, pre){
       if (!cnt) return ' '
-      const InstanceContext = this.saxer.get().InstanceContext
+      let InstanceContext = this.saxer.get().InstanceContext || {}
+      let _pre = this.findPath(pre)
+      InstanceContext.from = (function() {
+        if (_pre) {
+          return {
+            index: _pre.index,
+            path: _pre.path,
+            title: _pre.title,
+            idf: _pre.idf,
+            parent: _pre.parent,
+            attr: _pre.attr
+          }
+        }
+      })()
       const selectData = this.state.selectData
       if (typeof cnt == 'function') {
         let result = cnt(InstanceContext)
@@ -254,7 +267,6 @@ Aotoo.extend('router', function(opts, utile){
       let pre, preId, prePage, preContent
       let oriContent, content
       oriContent = this.getContent(id)
-      content = this.getRealContent(oriContent)
       
       if (this.state.direction == 'jumpback') {
         // content = lru.get(id)
@@ -294,7 +306,8 @@ Aotoo.extend('router', function(opts, utile){
       } else {
         prePage = <div ref='prePage' key={utile.uniqueId('Router_Single_')} className={boxCls} />
       }
-      
+
+      content = this.getRealContent(oriContent, pre)
       
       const curPage = <div 
           ref="curPage" 
@@ -492,7 +505,11 @@ Aotoo.extend('router', function(opts, utile){
           })
           return whereBack
         } else {
-          pushState({rootUrl: rootUrl}, true)
+          if (window.history.length) {
+            history.back()
+          } else {
+            pushState({rootUrl: rootUrl}, true)
+          }
         }
       }
     }
