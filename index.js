@@ -147,7 +147,7 @@ Aotoo.extend('router', function (opts, utile) {
     constructor(props) {
       super(props)
       this.state = utile.merge(this.state, {
-        flag: this.props.flag||'#',
+        flag: this.props.flag || '#',
         rootUrl: this.props.rootUrl || rootUrl,
         direction: 'goto',
         animate: this.props.animate || 'right'
@@ -597,11 +597,13 @@ Aotoo.extend('router', function (opts, utile) {
 
       if (typeof where != 'string') return
       const target = this.getWhereInfo(where)
-      this.$select({
-        select: target.index,
-        selectData: data,
-        direction: 'goto'
-      })
+      if (target) {
+        this.$select({
+          select: target.index,
+          selectData: data,
+          direction: 'goto'
+        })
+      }
     },
 
     back: function (where, data) {
@@ -650,11 +652,13 @@ Aotoo.extend('router', function (opts, utile) {
       if (where) {
         if (typeof where != 'string') return
         const target = this.getWhereInfo(where)
-        this.$select({
-          select: target.index,
-          selectData: utile.merge({}, data, condition),
-          direction: 'jumpback'
-        })
+        if (target) {
+          this.$select({
+            select: target.index,
+            selectData: utile.merge({}, data, condition),
+            direction: 'jumpback'
+          })
+        }
       } else {
         const whereBack = this.emit('historypop')
         // whereBack: {
