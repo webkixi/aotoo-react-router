@@ -1,25 +1,61 @@
-import {Tabs} from 'aotoo-react-tabs'
+import { Tabs } from 'aotoo-react-tabs'
 require('aotoo-mixins-iscroll')
 const Popstate = SAX('Popstate');
-(function() {
-  var blockPopstateEvent = document.readyState != "complete";
-  window.addEventListener("load", function() {
-    setTimeout(function(){ blockPopstateEvent = false; }, 0)
+var _history = []
+var _historyCount = 0
+var _leftStack = []
+var os
+
+function _os(ua) {
+  var ret = {},
+    android = ua.match(/(?:Android);?[\s\/]+([\d.]+)?/),
+    ios = ua.match(/(?:iPad|iPod|iPhone).*OS\s([\d_]+)/);
+  ret.mobile = !!(android || ios)
+  return ret;
+}
+
+(function () {
+  var anchorHash = false
+  var anchorHref
+  os = _os(navigator.userAgent)
+
+  document.addEventListener('click', function (e) {
+    var target = e.target
+    if (target.nodeName == 'A') {
+      anchorHash = false
+      anchorHref = target.href
+      anchorHash = target.href.indexOf('#') > -1 ? true : false
+    }
   }, false)
-  window.addEventListener("popstate", function(evt) {
-    if (blockPopstateEvent && document.readyState=="complete") {
+
+  var blockPopstateEvent = document.readyState != "complete";
+  window.addEventListener("load", function () {
+    setTimeout(
+      function () {
+        blockPopstateEvent = false;
+      },
+      0)
+  }, false)
+
+  window.addEventListener("popstate", function (evt) {
+    if (blockPopstateEvent && document.readyState == "complete") {
       evt.preventDefault()
       evt.stopImmediatePropagation()
     } else {
-      Popstate.emit('goback')
-      // Popstate.trigger()
+      if (anchorHash) {
+        /* do something */
+      } else {
+        Popstate.emit('__goback');
+      }
+      anchorHref = ''
+      anchorHash = false
     }
   }, false)
 }())
 
-function pushState(props, nohash){
-	const flag = props.flag ? (typeof props.flag == 'boolean' ? '#' : props.flag) : ''
-	const uri = flag ? props.rootUrl + flag + props.key : props.rootUrl
+function pushState(props, nohash) {
+  const flag = props.flag ? (typeof props.flag == 'boolean' ? '#' : props.flag) : ''
+  const uri = flag ? props.rootUrl + flag + props.key : props.rootUrl
   window.history.pushState(props, '', uri)
 }
 
@@ -67,34 +103,33 @@ function _lru(max) {
 
 
 let lru = _lru(50)
-let _history = []
-let _historyCount = 0
-let _leftStack = []
 let animatecss = {
-	fade: {
-		in: ' fadeIn animated-faster',
-		rein: ' fadeIn animated-fastest',
-		out: ' fadeOut contentHide animated-fastest',
-		back: ' fadeOut contentHide animated-faster'
-	},
+  fade: {
+    in: ' fadeIn animated-faster',
+    rein: ' fadeIn animated-fastest',
+    out: ' fadeOut contentHide animated-fastest',
+    back: ' fadeOut contentHide animated-faster'
+  },
 
-	left: {
-		in: ' fadeInLeft animated-faster',
-		rein: ' fadeIn animated-fastest',
-		out: ' fadeOut contentHide animated-fastest',
-		back: ' fadeOutLeft contentHide animated-faster'
-	},
+  left: {
+    in: ' fadeInLeft animated-faster',
+    rein: ' fadeIn animated-fastest',
+    out: ' fadeOut contentHide animated-fastest',
+    back: ' fadeOutLeft contentHide animated-faster'
+  },
 
-	right: {
-		in: ' fadeInRight animated-faster',
-		rein: ' fadeIn animated-fastest',
-		out: ' outHeight fadeOut contentHide animated-fastest',
-		back: ' outHeight fadeOutRight contentHide animated-faster',
-	}
+  right: {
+    in: ' fadeInRight animated-faster',
+    rein: ' fadeIn animated-fastest',
+    out: ' outHeight fadeOut contentHide animated-fastest',
+    back: ' outHeight fadeOutRight contentHide animated-faster',
+  }
 }
 
-Aotoo.extend('router', function(opts, utile){
+Aotoo.extend('router', function (opts, utile) {
   let dft = {
+    storage: window.sessionStorage,
+    likeApp: false,   // 模仿app的效果，比如动画切换，保持2个页面
     props: {
       routerClass: 'routerGroup',
       mulitple: false
@@ -109,10 +144,10 @@ Aotoo.extend('router', function(opts, utile){
 
   const rootUrl = location.href.split('#')[0]
   class Router extends Tabs {
-    constructor(props){
+    constructor(props) {
       super(props)
       this.state = utile.merge(this.state, {
-        flag: true,
+        flag: this.props.flag||'#',
         rootUrl: this.props.rootUrl || rootUrl,
         direction: 'goto',
         animate: this.props.animate || 'right'
@@ -120,27 +155,27 @@ Aotoo.extend('router', function(opts, utile){
       this.prePageInfo
 
       if (this.state.animate) {
-				const animateType = this.state.animate  // fade, left, right
-				this.animatein = animatecss[animateType]['in']
-				this.animaterein = animatecss[animateType]['rein']
-				this.animateout = animatecss[animateType]['out']
-				this.animateback = animatecss[animateType]['back']
-			}
+        const animateType = this.state.animate  // fade, left, right
+        this.animatein = animatecss[animateType]['in']
+        this.animaterein = animatecss[animateType]['rein']
+        this.animateout = animatecss[animateType]['out']
+        this.animateback = animatecss[animateType]['back']
+      }
 
       this.historyPush = this.historyPush.bind(this)
       this.getRealContent = this.getRealContent.bind(this)
       this.findPath = this.findPath.bind(this)
     }
-    
+
     componentWillMount() {
       super.componentWillMount()
       const that = this
       const menuData = this.saxer.get().MenuData
       const contentData = this.saxer.get().ContentData
       const selectItem = menuData[this.state.select]
-      
 
-      this.on('historypush', function(opts){
+
+      this.on('historypush', function (opts) {
         const _path = opts.path
         const _data = opts.data
         const historyItem = that.findPath(_path)
@@ -148,11 +183,11 @@ Aotoo.extend('router', function(opts, utile){
         that.historyPush({
           index: historyItem.index,
           key: historyItem.path,
-          data: _data||{}
+          data: _data || {}
         })
       })
 
-      this.on('historypop', function(opts){
+      this.on('historypop', function (opts) {
         return that.historyPop(opts)
       })
 
@@ -162,14 +197,14 @@ Aotoo.extend('router', function(opts, utile){
       })
     }
 
-    findPath(where){
+    findPath(where) {
       const type = typeof where
       const menu_data = this.saxer.get().MenuData
       if (type == 'number') {
         return menu_data[where]
       }
       if (type == 'string') {
-        return utile.find(menu_data, {path: where})
+        return utile.find(menu_data, { path: where })
       }
     }
 
@@ -192,7 +227,6 @@ Aotoo.extend('router', function(opts, utile){
           flag: this.state.flag
         }, true)
       }
-
       const preState = _history[_history.length - 1]
       _history.push({
         index: props.index,
@@ -206,7 +240,7 @@ Aotoo.extend('router', function(opts, utile){
       _historyCount++
     }
 
-    historyPop(){
+    historyPop() {
       let state = _history.pop()
       if (!state) return false
       let rightState;
@@ -224,17 +258,17 @@ Aotoo.extend('router', function(opts, utile){
         }
       } else {
         rightState = _history.pop()
-        pushState({rootUrl: this.state.rootUrl, flag: this.state.flag}, true)
+        pushState({ rootUrl: this.state.rootUrl, flag: this.state.flag }, true)
       }
 
       return rightState
     }
 
-    getRealContent(cnt, pre){
+    getRealContent(cnt, pre) {
       if (!cnt) return ' '
       let InstanceContext = this.saxer.get().InstanceContext || {}
       let _pre = this.findPath(pre)
-      InstanceContext.from = (function() {
+      InstanceContext.from = (function () {
         if (_pre) {
           return {
             index: _pre.index,
@@ -253,8 +287,8 @@ Aotoo.extend('router', function(opts, utile){
           if (result['$$typeof']) return result
 
           // enter, leave, main, loaded
-          if (typeof result.enter == 'function') return result.enter(selectData)  
-          else if(typeof result.main == 'function') {
+          if (typeof result.enter == 'function') return result.enter(selectData)
+          else if (typeof result.main == 'function') {
             return result.main(selectData)
           }
         }
@@ -262,12 +296,12 @@ Aotoo.extend('router', function(opts, utile){
       return cnt
     }
 
-    getPage(boxCls){
+    getPage(boxCls) {
       const id = this.state.select
       let pre, preId, prePage, preContent
       let oriContent, content
       oriContent = this.getContent(id)
-      
+
       if (this.state.direction == 'jumpback') {
         // content = lru.get(id)
         // if (!content) {
@@ -276,46 +310,48 @@ Aotoo.extend('router', function(opts, utile){
         // }
 
         pre = _leftStack.length ? _leftStack[_leftStack.length - 1] : '';
-        let rightIndex = _.findLastIndex(_history, function(o) { return o.index == id })
+        let rightIndex = _.findLastIndex(_history, function (o) { return o.index == id })
         if (rightIndex > -1) {
           rightIndex += 1
-          _history = _history.slice(0, rightIndex) 
-          _leftStack = _leftStack.slice(0, (rightIndex) )
+          _history = _history.slice(0, rightIndex)
+          _leftStack = _leftStack.slice(0, (rightIndex))
         }
       }
-      else 
-      if (this.state.direction == 'back') {
-        pre = _leftStack.pop()
-      } else {
-        pre = _leftStack.length ? _leftStack[_leftStack.length-1] : '';
-      }
-      
-      if (this.state.animate !== 'fade') {
-        if (pre && pre.id !== id) {
-          // this.prePageInfo = pre
-          // preContent = this.getRealContent(this.getContent(pre.id))
+      else
+        if (this.state.direction == 'back') {
+          pre = _leftStack.pop()
+        } else {
+          pre = _leftStack.length ? _leftStack[_leftStack.length - 1] : '';
+        }
 
-          this.prePageInfo = pre
-          preContent = lru.get(pre.id)
-          if (!preContent) {
-            preContent = this.getRealContent(this.getContent(pre.id))
+      if (this.state.animate) {
+        if (this.state.animate == 'fade' || !dft.likeApp) {
+          prePage = <div ref='prePage' key={utile.uniqueId('Router_Single_')} className={boxCls} />
+        } else {
+          if (pre && pre.id !== id) {
+            // this.prePageInfo = pre
+            // preContent = this.getRealContent(this.getContent(pre.id))
+
+            this.prePageInfo = pre
+            preContent = lru.get(pre.id)
+            if (!preContent) {
+              preContent = this.getRealContent(this.getContent(pre.id))
+            }
+
+            prePage = <div ref='prePage' key={utile.uniqueId('Router_Single_')} className={boxCls}>{preContent}</div>
           }
-
-          prePage = <div ref='prePage' key={utile.uniqueId('Router_Single_')} className={boxCls}>{preContent}</div>
         }
-      } else {
-        prePage = <div ref='prePage' key={utile.uniqueId('Router_Single_')} className={boxCls} />
       }
 
       content = this.getRealContent(oriContent, pre)
-      
-      const curPage = <div 
-          ref="curPage" 
-          key={utile.uniqueId('Router_Single_')} 
-          className={boxCls}>
-          {content}
-        </div>
-      
+
+      const curPage = <div
+        ref="curPage"
+        key={utile.uniqueId('Router_Single_')}
+        className={boxCls}>
+        {content}
+      </div>
+
       // 下面的部分有顺序要求，不能随意放置
       if (this.state.direction == 'goto') {
         _leftStack.push({
@@ -333,14 +369,14 @@ Aotoo.extend('router', function(opts, utile){
       ]
     }
 
-    leaveContent(){
+    leaveContent() {
       if (this.prePageInfo) {
         const InstanceContext = this.saxer.get().InstanceContext
         const _pre = this.prePageInfo.origin
         if (typeof _pre == 'function') {
           let result = _pre(InstanceContext)
           if (typeof result == 'object') {
-            if (typeof result.leave == 'function') return result.leave()  
+            if (typeof result.leave == 'function') return result.leave()
           }
         }
       }
@@ -349,7 +385,7 @@ Aotoo.extend('router', function(opts, utile){
     componentDidMount() {
       let animatein = this.animatein
       let animateout = this.animateout
-      if (this.state.direction == 'back' || this.state.direction == 'jumpback' ) {
+      if (this.state.direction == 'back' || this.state.direction == 'jumpback') {
         animateout = this.animateback
         animatein = this.animaterein
       }
@@ -368,7 +404,7 @@ Aotoo.extend('router', function(opts, utile){
       // this.leaveContent()
     }
 
-    render(){
+    render() {
       const cls = !this.props.routerClass ? 'routerGroup ' : 'routerGroup ' + this.props.routerClass
       // const boxes_cls = !this.props.mulitple ? 'routerBoxes' : 'routerBoxes mulitple'
       const boxes_cls = !this.props.mulitple ? (this.props.animate == 'left' ? 'routerBoxes boxLeft' : this.props.animate == 'right' ? 'routerBoxes boxRight' : 'routerBoxes') : 'routerBoxes mulitple'
@@ -376,13 +412,13 @@ Aotoo.extend('router', function(opts, utile){
       const jsxMenu = this.saxer.get().MenuJsx
       const content = this.getPage(boxes_cls)
       const IscrollTreeMenu = Aotoo.iscroll(<div className='routerMenus'>{jsxMenu}</div>, {
-        onscroll: function(){},
-        onscrollend: function(){}
+        onscroll: function () { },
+        onscrollend: function () { }
       })
 
       return (
         <div className={cls}>
-          { this.state.showMenu ? <IscrollTreeMenu /> : '' }
+          {this.state.showMenu ? <IscrollTreeMenu /> : ''}
           {content}
         </div>
       )
@@ -390,13 +426,13 @@ Aotoo.extend('router', function(opts, utile){
   }
 
   const Action = {
-    UPDATE: function(ostate, opts, ctx){
+    UPDATE: function (ostate, opts, ctx) {
       let state = this.curState
       state.data = opts.data
       return state
     },
 
-    SELECT: function(ostate, opts, ctx){
+    SELECT: function (ostate, opts, ctx) {
       let state = this.curState
 
       // select
@@ -417,9 +453,9 @@ Aotoo.extend('router', function(opts, utile){
           data: state.selectData
         })
       }
-      
+
       if (typeof opts.cb == 'function') {
-        setTimeout(function() { opts.cb() }, 100);
+        setTimeout(function () { opts.cb() }, 100);
       }
 
       return state
@@ -431,22 +467,48 @@ Aotoo.extend('router', function(opts, utile){
   router.condition = {
     preback: 'preback'
   }
-  
+
   router.saxer.append({
     InstanceContext: router
   })
 
-  Popstate.on('goback', function(){
+  Popstate.on('__goback', function (param) {
     return router.back()
+
+    // let hash
+    // if (param.href.indexOf('#')>-1) {
+    //   hash = param.href.substr(param.href.indexOf('#')+1)
+    // }
+    // // if (!hash) {
+    // //   return router.back()
+    // // }
+    // if (hash) {
+    //   const lastItem = _history[(_history.length - 1)]
+    //   if (hash !== lastItem.path) {
+    //     return router.back()
+    //   }
+    // }
   })
 
   router.extend({
-    getWhereInfo: function(where){
+    getWhereInfo: function (where) {
       const menu_data = this.saxer.get().MenuData
-      return utile.find(menu_data, {path: where})
+      return utile.find(menu_data, { path: where })
     },
-    start: function(id, data){
-      if (this.hasMounted()){
+    getHistory: function (params) {
+      return _history
+    },
+    setHistory: function (record) {
+      if (record) {
+        _history = record.history || _history
+        _leftStack = record.stack || _leftStack
+      }
+    },
+    clearHistory: function (params) {
+      _history = []
+    },
+    start: function (id, data) {
+      if (this.hasMounted()) {
         this.goto(id, data)
       } else {
         if (this.config && this.config.props) {
@@ -455,8 +517,85 @@ Aotoo.extend('router', function(opts, utile){
         }
       }
     },
-    goto: function(where, data){
-      if (typeof where != 'string') return 
+    save: function (name, params) {
+      let sessName
+      if (name) {
+        // sessName = name + '_' + this.globalName
+        sessName = name
+        const his = JSON.stringify(_history)
+        const stack = JSON.stringify(_leftStack)
+        const cur = _history[_history.length - 1]
+
+        const sessData = {
+          history: _history,
+          stack: _leftStack,
+          current: cur
+        }
+        dft.storage.setItem(sessName, JSON.stringify(sessData))
+      }
+    },
+    restore: function (name, params) {
+      let sessName
+      if (name) {
+        // sessName = name + '_' + this.globalName
+        sessName = name
+        if (dft.storage[sessName]) {
+          const sessData = JSON.parse(dft.storage[sessName])
+          dft.storage.removeItem(sessName)
+
+          var cur = {
+            page: sessData.history.pop(),
+            stack: sessData.stack.pop()
+          }
+
+          _history = sessData.history
+          _leftStack = sessData.stack
+
+          // _history.pop()
+          // _leftStack.pop()
+          this.start(
+            cur.page.path,
+            cur.page.data
+          )
+
+          return true
+        }
+      }
+    },
+
+    goto: function (where, data) {
+      const result_beforegoto = this.emit('_beforeGoto', {
+        record: {
+          history: _history,
+          // stack: _leftStack,
+        },
+        param: {
+          path: where,
+          data: data
+        },
+
+        setHistory: this.setHistory
+      })
+      this.off('_beforeGoto')
+
+      const resultBeforegoto = this.emit('beforeGoto', {
+        record: {
+          history: _history,
+          // stack: _leftStack,
+        },
+
+        param: {
+          path: where,
+          data: data
+        },
+
+        setHistory: this.setHistory
+      })
+
+      if (result_beforegoto) return
+      if (resultBeforegoto) return
+
+      if (typeof where != 'string') return
       const target = this.getWhereInfo(where)
       this.$select({
         select: target.index,
@@ -464,10 +603,40 @@ Aotoo.extend('router', function(opts, utile){
         direction: 'goto'
       })
     },
-    back: function(where, data){
+
+    back: function (where, data) {
+      const result_beforeback = this.emit('_beforeBack', {
+        record: {
+          history: _history,
+          // stack: _leftStack,
+        },
+        param: {
+          path: where,
+          data: data
+        },
+        setHistory: this.setHistory
+      })
+
+      this.off('_beforeBack')
+
+      const resultBeforeback = this.emit('beforeBack', {
+        record: {
+          history: _history,
+          // stack: _leftStack,
+        },
+        param: {
+          path: where,
+          data: data
+        },
+        setHistory: this.setHistory
+      })
+
+      if (result_beforeback) return
+      if (resultBeforeback) return
+
       let condition = {}
       if (this.hasOn('preback')) {
-        const h = _history[_history.length-1]
+        const h = _history[_history.length - 1]
         const whereami = {
           index: h.index,
           path: h.path,
@@ -476,10 +645,10 @@ Aotoo.extend('router', function(opts, utile){
           flag: h.flag
         }
         condition = this.emit('preback', whereami)
-        if (!condition) return 
+        if (!condition) return
       }
       if (where) {
-        if (typeof where != 'string') return 
+        if (typeof where != 'string') return
         const target = this.getWhereInfo(where)
         this.$select({
           select: target.index,
@@ -489,13 +658,13 @@ Aotoo.extend('router', function(opts, utile){
       } else {
         const whereBack = this.emit('historypop')
         // whereBack: {
-          // index: props.index,
-          // key: props.key,
-          // data: props.data,
-          // rootUrl: this.state.rootUrl,
-          // preState: curHistoryState,
-          // timeLine: _historyCount,
-          // flag: this.state.flag
+        // index: props.index,
+        // key: props.key,
+        // data: props.data,
+        // rootUrl: this.state.rootUrl,
+        // preState: curHistoryState,
+        // timeLine: _historyCount,
+        // flag: this.state.flag
         //}
         if (whereBack) {
           this.$select({
@@ -508,7 +677,7 @@ Aotoo.extend('router', function(opts, utile){
           if (window.history.length) {
             history.back()
           } else {
-            pushState({rootUrl: rootUrl}, true)
+            pushState({ rootUrl: rootUrl }, true)
           }
         }
       }
