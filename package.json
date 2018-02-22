@@ -1,6 +1,6 @@
 {
   "name": "aotoo-react-router",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "aotoo fed router for SPA",
   "main": "./build/index.js",
   "devDependencies": {

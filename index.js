@@ -14,6 +14,25 @@ function _os(ua) {
   return ret;
 }
 
+let stat = true
+function once(cb, delay=1000) {
+  function next(params) {
+    stat = true
+  }
+  if (stat) {
+    stat = false
+    cb(next)
+  }
+
+  // clearTimeout(mytimmer)
+  // mytimmer = setTimeout(() => {
+  //   if (stat) {
+  //     stat = false
+  //     cb(next)
+  //   }
+  // }, delay);
+}
+
 (function () {
   var anchorHash = false
   var anchorHref
@@ -490,6 +509,11 @@ Aotoo.extend('router', function (opts, utile) {
     // }
   })
 
+  let timmer = {
+    goto: '',
+    back: ''
+  }
+
   router.extend({
     getWhereInfo: function (where) {
       const menu_data = this.saxer.get().MenuData
@@ -564,127 +588,137 @@ Aotoo.extend('router', function (opts, utile) {
     },
 
     goto: function (where, data) {
-      const result_beforegoto = this.emit('_beforeGoto', {
-        record: {
-          history: _history,
-          // stack: _leftStack,
-        },
-        param: {
-          path: where,
-          data: data
-        },
+      once( next => {
+        const result_beforegoto = this.emit('_beforeGoto', {
+          record: {
+            history: _history,
+            // stack: _leftStack,
+          },
+          param: {
+            path: where,
+            data: data
+          },
 
-        setHistory: this.setHistory
-      })
-      this.off('_beforeGoto')
-
-      const resultBeforegoto = this.emit('beforeGoto', {
-        record: {
-          history: _history,
-          // stack: _leftStack,
-        },
-
-        param: {
-          path: where,
-          data: data
-        },
-
-        setHistory: this.setHistory
-      })
-
-      if (result_beforegoto) return
-      if (resultBeforegoto) return
-
-      if (typeof where != 'string') return
-      const target = this.getWhereInfo(where)
-      if (target) {
-        this.$select({
-          select: target.index,
-          selectData: data,
-          direction: 'goto'
+          setHistory: this.setHistory
         })
-      }
-    },
+        this.off('_beforeGoto')
 
-    back: function (where, data) {
-      const result_beforeback = this.emit('_beforeBack', {
-        record: {
-          history: _history,
-          // stack: _leftStack,
-        },
-        param: {
-          path: where,
-          data: data
-        },
-        setHistory: this.setHistory
-      })
+        const resultBeforegoto = this.emit('beforeGoto', {
+          record: {
+            history: _history,
+            // stack: _leftStack,
+          },
 
-      this.off('_beforeBack')
+          param: {
+            path: where,
+            data: data
+          },
 
-      const resultBeforeback = this.emit('beforeBack', {
-        record: {
-          history: _history,
-          // stack: _leftStack,
-        },
-        param: {
-          path: where,
-          data: data
-        },
-        setHistory: this.setHistory
-      })
+          setHistory: this.setHistory
+        })
 
-      if (result_beforeback) return
-      if (resultBeforeback) return
+        if (result_beforegoto) return
+        if (resultBeforegoto) return
 
-      let condition = {}
-      if (this.hasOn('preback')) {
-        const h = _history[_history.length - 1]
-        const whereami = {
-          index: h.index,
-          path: h.path,
-          data: h.data,
-          pre: h.preState,
-          flag: h.flag
-        }
-        condition = this.emit('preback', whereami)
-        if (!condition) return
-      }
-      if (where) {
         if (typeof where != 'string') return
         const target = this.getWhereInfo(where)
         if (target) {
           this.$select({
             select: target.index,
-            selectData: utile.merge({}, data, condition),
-            direction: 'jumpback'
+            selectData: data,
+            direction: 'goto'
           })
         }
-      } else {
-        const whereBack = this.emit('historypop')
-        // whereBack: {
-        // index: props.index,
-        // key: props.key,
-        // data: props.data,
-        // rootUrl: this.state.rootUrl,
-        // preState: curHistoryState,
-        // timeLine: _historyCount,
-        // flag: this.state.flag
-        //}
-        if (whereBack) {
-          this.$select({
-            select: whereBack.index,
-            selectData: utile.merge({}, whereBack.data, condition),
-            direction: 'back'
-          })
-          return whereBack
+        setTimeout(() => {
+          next()
+        }, 1000);
+      })
+    },
+
+    back: function (where, data) {
+      once( next => {
+        const result_beforeback = this.emit('_beforeBack', {
+          record: {
+            history: _history,
+            // stack: _leftStack,
+          },
+          param: {
+            path: where,
+            data: data
+          },
+          setHistory: this.setHistory
+        })
+  
+        this.off('_beforeBack')
+  
+        const resultBeforeback = this.emit('beforeBack', {
+          record: {
+            history: _history,
+            // stack: _leftStack,
+          },
+          param: {
+            path: where,
+            data: data
+          },
+          setHistory: this.setHistory
+        })
+  
+        if (result_beforeback) return
+        if (resultBeforeback) return
+  
+        let condition = {}
+        if (this.hasOn('preback')) {
+          const h = _history[_history.length - 1]
+          const whereami = {
+            index: h.index,
+            path: h.path,
+            data: h.data,
+            pre: h.preState,
+            flag: h.flag
+          }
+          condition = this.emit('preback', whereami)
+          if (!condition) return
+        }
+        if (where) {
+          if (typeof where != 'string') return
+          const target = this.getWhereInfo(where)
+          if (target) {
+            this.$select({
+              select: target.index,
+              selectData: utile.merge({}, data, condition),
+              direction: 'jumpback'
+            })
+          }
         } else {
-          if (window.history.length) {
-            history.back()
+          const whereBack = this.emit('historypop')
+          // whereBack: {
+          // index: props.index,
+          // key: props.key,
+          // data: props.data,
+          // rootUrl: this.state.rootUrl,
+          // preState: curHistoryState,
+          // timeLine: _historyCount,
+          // flag: this.state.flag
+          //}
+          if (whereBack) {
+            this.$select({
+              select: whereBack.index,
+              selectData: utile.merge({}, whereBack.data, condition),
+              direction: 'back'
+            })
+            return whereBack
           } else {
-            pushState({ rootUrl: rootUrl }, true)
+            if (window.history.length) {
+              history.back()
+            } else {
+              pushState({ rootUrl: rootUrl }, true)
+            }
           }
         }
-      }
+        setTimeout(() => {
+          next()
+        }, 1000);
+      })
     }
   })
 
