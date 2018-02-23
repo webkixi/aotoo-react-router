@@ -15,7 +15,7 @@ function _os(ua) {
 }
 
 let stat = true
-function once(cb, delay=1000) {
+function once(cb) {
   function next(params) {
     stat = true
   }
@@ -145,16 +145,19 @@ let animatecss = {
   }
 }
 
+let __opts
 Aotoo.extend('router', function (opts, utile) {
   let dft = {
     storage: window.sessionStorage,
     likeApp: false,   // 模仿app的效果，比如动画切换，保持2个页面
+    gap: 100,   // 两次点击之间的间隙延时时间，防止click多次响应
     props: {
       routerClass: 'routerGroup',
       mulitple: false
     }
   }
   opts = utile.merge(dft, opts)
+  __opts = opts
 
   if (opts.animatecss) {
     animatecss = utile.merge(animatecss, opts.animatecss)
@@ -631,7 +634,7 @@ Aotoo.extend('router', function (opts, utile) {
         }
         setTimeout(() => {
           next()
-        }, 1000);
+        }, __opts.gap);
       })
     },
 
@@ -717,7 +720,7 @@ Aotoo.extend('router', function (opts, utile) {
         }
         setTimeout(() => {
           next()
-        }, 1000);
+        }, __opts.gap);
       })
     }
   })
