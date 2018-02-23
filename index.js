@@ -592,6 +592,10 @@ Aotoo.extend('router', function (opts, utile) {
 
     goto: function (where, data) {
       once( next => {
+        setTimeout(() => {
+          next()
+        }, __opts.gap);
+
         const result_beforegoto = this.emit('_beforeGoto', {
           record: {
             history: _history,
@@ -632,14 +636,15 @@ Aotoo.extend('router', function (opts, utile) {
             direction: 'goto'
           })
         }
-        setTimeout(() => {
-          next()
-        }, __opts.gap);
       })
     },
 
     back: function (where, data) {
       once( next => {
+        setTimeout(() => {
+          next()
+        }, __opts.gap);
+        
         const result_beforeback = this.emit('_beforeBack', {
           record: {
             history: _history,
@@ -718,9 +723,6 @@ Aotoo.extend('router', function (opts, utile) {
             }
           }
         }
-        setTimeout(() => {
-          next()
-        }, __opts.gap);
       })
     }
   })
