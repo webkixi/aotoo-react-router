@@ -348,7 +348,8 @@ Aotoo.extend('router', function (opts, utile) {
 
       if (this.state.animate) {
         if (this.state.animate == 'fade' || !dft.likeApp) {
-          prePage = <div ref='prePage' key={utile.uniqueId('Router_Single_')} className={boxCls} />
+          // prePage = <div ref='prePage' key={utile.uniqueId('Router_Single_')} className={boxCls} />
+          prePage = undefined
         } else {
           if (pre && pre.id !== id) {
             // this.prePageInfo = pre
@@ -385,10 +386,11 @@ Aotoo.extend('router', function (opts, utile) {
 
       lru.set(id, content)
 
-      return [
-        prePage,
-        curPage
-      ]
+      if (prePage) {
+        return [ prePage, curPage ]
+      } else {
+        return [ curPage ]
+      }
     }
 
     leaveContent() {
