@@ -535,6 +535,7 @@ Aotoo.extend('router', function (opts, utile) {
     },
     clearHistory: function (params) {
       _history = []
+      _leftStack = []
     },
     start: function (id, data) {
       if (this.hasMounted()) {
@@ -546,10 +547,19 @@ Aotoo.extend('router', function (opts, utile) {
         }
       }
     },
+    delete: function () {
+      let sessName
+      if (this.storageName) {
+        sessName = this.storageName
+        if (dft.storage[sessName]) {
+          dft.storage.removeItem(sessName)
+          return true
+        }
+      }
+    },
     save: function (name, params) {
       let sessName
       if (name) {
-        // sessName = name + '_' + this.globalName
         sessName = name
         const his = JSON.stringify(_history)
         const stack = JSON.stringify(_leftStack)
@@ -560,6 +570,7 @@ Aotoo.extend('router', function (opts, utile) {
           stack: _leftStack,
           current: cur
         }
+        this.storageName = sessName
         dft.storage.setItem(sessName, JSON.stringify(sessData))
       }
     },
