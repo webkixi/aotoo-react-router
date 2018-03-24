@@ -566,6 +566,7 @@ Aotoo.extend('router', function (opts, utile) {
         const cur = _history[_history.length - 1]
 
         const sessData = {
+          from: window.location,
           history: _history,
           stack: _leftStack,
           current: cur
