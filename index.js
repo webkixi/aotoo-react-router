@@ -584,22 +584,24 @@ Aotoo.extend('router', function (opts, utile) {
           const sessData = JSON.parse(dft.storage[sessName])
           dft.storage.removeItem(sessName)
 
-          var cur = {
-            page: sessData.history.pop(),
-            stack: sessData.stack.pop()
+          if (sessData.history.length) {
+            var cur = {
+              page: sessData.history.pop(),
+              stack: sessData.stack.pop()
+            }
+
+            _history = sessData.history
+            _leftStack = sessData.stack
+
+            // _history.pop()
+            // _leftStack.pop()
+            this.start(
+              cur.page.path,
+              cur.page.data
+            )
+  
+            return true
           }
-
-          _history = sessData.history
-          _leftStack = sessData.stack
-
-          // _history.pop()
-          // _leftStack.pop()
-          this.start(
-            cur.page.path,
-            cur.page.data
-          )
-
-          return true
         }
       }
     },
