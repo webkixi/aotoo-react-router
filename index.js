@@ -387,7 +387,8 @@ Aotoo.extend('router', function (opts, utile) {
       lru.set(id, content)
 
       if (prePage) {
-        return [ prePage, curPage ]
+        // return [ prePage, curPage ]  //暂时屏蔽前一页
+        return [ curPage ]
       } else {
         return [ curPage ]
       }
