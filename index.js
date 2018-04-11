@@ -351,6 +351,7 @@ Aotoo.extend('router', function (opts, utile) {
           // prePage = <div ref='prePage' key={utile.uniqueId('Router_Single_')} className={boxCls} />
           prePage = undefined
         } else {
+          pre = undefined  //暂时封住前一页的逻辑
           if (pre && pre.id !== id) {
             // this.prePageInfo = pre
             // preContent = this.getRealContent(this.getContent(pre.id))
@@ -387,8 +388,7 @@ Aotoo.extend('router', function (opts, utile) {
       lru.set(id, content)
 
       if (prePage) {
-        // return [ prePage, curPage ]  //暂时屏蔽前一页
-        return [ curPage ]
+        return [ prePage, curPage ]  //暂时屏蔽前一页
       } else {
         return [ curPage ]
       }
