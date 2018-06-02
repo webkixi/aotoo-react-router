@@ -154,7 +154,8 @@ Aotoo.extend('router', function (opts, utile) {
     props: {
       routerClass: 'routerGroup',
       mulitple: false
-    }
+    },
+    iscrollConfig: {}  // 导航栏的iscroll滚动参数设置
   }
   opts = utile.merge(dft, opts)
   __opts = opts
@@ -425,21 +426,23 @@ Aotoo.extend('router', function (opts, utile) {
       this.leaveContent()
     }
 
-    componentDidUpdate(prevProps, prevState) {
-      // this.leaveContent()
-    }
+    // componentDidUpdate(prevProps, prevState) {
+    //   // this.leaveContent()
+    // }
 
     render() {
       const cls = !this.props.routerClass ? 'routerGroup ' : 'routerGroup ' + this.props.routerClass
       // const boxes_cls = !this.props.mulitple ? 'routerBoxes' : 'routerBoxes mulitple'
       const boxes_cls = !this.props.mulitple ? (this.props.animate == 'left' ? 'routerBoxes boxLeft' : this.props.animate == 'right' ? 'routerBoxes boxRight' : 'routerBoxes') : 'routerBoxes mulitple'
 
-      const jsxMenu = this.saxer.get().MenuJsx
+      // const jsxMenu = this.saxer.get().MenuJsx
+      const jsxMenu = this.createMenu()
+
       const content = this.getPage(boxes_cls)
-      const IscrollTreeMenu = Aotoo.iscroll(<div className='routerMenus'>{jsxMenu}</div>, {
-        onscroll: function () { },
-        onscrollend: function () { }
-      })
+      const IscrollTreeMenu = Aotoo.iscroll(
+        <div className='routerMenus'>{jsxMenu}</div>, 
+        opts.iscrollConfig
+      )
 
       return (
         <div className={cls}>
