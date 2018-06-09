@@ -96,21 +96,21 @@ function _lru(max) {
       return cache[key] !== undefined || _cache[key] !== undefined
     },
     remove: function (key) {
-      if (cache[key] !== undefined)
+      if(cache[key] !== undefined)
         cache[key] = undefined
-      if (_cache[key] !== undefined)
+      if(_cache[key] !== undefined)
         _cache[key] = undefined
     },
     get: function (key) {
       var v = cache[key]
-      if (v !== undefined) return v
-      if (v = _cache[key]) {
+      if(v !== undefined) return v
+      if((v = _cache[key]) !== undefined) {
         update(key, v)
         return v
       }
     },
     set: function (key, value) {
-      if (cache[key] !== undefined) cache[key] = value
+      if(cache[key] !== undefined) cache[key] = value
       else update(key, value)
     },
     clear: function () {
@@ -149,7 +149,7 @@ let __opts
 Aotoo.extend('router', function (opts, utile) {
   let dft = {
     storage: window.sessionStorage,
-    likeApp: false,   // 模仿app的效果，比如动画切换，保持2个页面
+    likeApp: false,   // 模仿app动画切换，保持2个页面, 置为false 可暂时停止prepage页面，提升性能
     gap: 100,   // 两次点击之间的间隙延时时间，防止click多次响应
     props: {
       routerClass: 'routerGroup',
@@ -320,10 +320,10 @@ Aotoo.extend('router', function (opts, utile) {
     }
 
     getPage(boxCls) {
-      const id = this.state.select
-      let pre, preId, prePage, preContent
-      let oriContent, content
-      oriContent = this.getContent(id)
+      const id = this.state.select;
+      let pre, preId, prePage, preContent;
+      let oriContent, content;
+      oriContent = this.getContent(id);
 
       if (this.state.direction == 'jumpback') {
         // content = lru.get(id)
@@ -341,28 +341,23 @@ Aotoo.extend('router', function (opts, utile) {
         }
       }
       else
-        if (this.state.direction == 'back') {
-          pre = _leftStack.pop()
-        } else {
-          pre = _leftStack.length ? _leftStack[_leftStack.length - 1] : '';
-        }
+      if (this.state.direction == 'back') {
+        pre = _leftStack.pop()
+      } else {
+        pre = _leftStack.length ? _leftStack[_leftStack.length - 1] : '';
+      }
 
       if (this.state.animate) {
-        if (this.state.animate == 'fade' || !dft.likeApp) {
-          // prePage = <div ref='prePage' key={utile.uniqueId('Router_Single_')} className={boxCls} />
+        if (this.state.animate == 'fade' || !opts.likeApp) {
           prePage = undefined
+          this.prePageInfo = (pre && pre.id !== id) ? { origin: this.getContent(pre.id), ...pre} : ''
         } else {
-          pre = undefined  //暂时封住前一页的逻辑
           if (pre && pre.id !== id) {
-            // this.prePageInfo = pre
-            // preContent = this.getRealContent(this.getContent(pre.id))
-
-            this.prePageInfo = pre
+            this.prePageInfo = { origin: this.getContent(pre.id), ...pre}
             preContent = lru.get(pre.id)
             if (!preContent) {
               preContent = this.getRealContent(this.getContent(pre.id))
             }
-
             prePage = <div ref='prePage' key={utile.uniqueId('Router_Single_')} className={boxCls}>{preContent}</div>
           }
         }
@@ -381,15 +376,13 @@ Aotoo.extend('router', function (opts, utile) {
       if (this.state.direction == 'goto') {
         _leftStack.push({
           id: id,
-          // origin: oriContent
-          // content: content,
         })
       }
 
       lru.set(id, content)
 
       if (prePage) {
-        return [ prePage, curPage ]  //暂时屏蔽前一页
+        return [ prePage, curPage ]
       } else {
         return [ curPage ]
       }
@@ -426,16 +419,9 @@ Aotoo.extend('router', function (opts, utile) {
       this.leaveContent()
     }
 
-    // componentDidUpdate(prevProps, prevState) {
-    //   // this.leaveContent()
-    // }
-
     render() {
       const cls = !this.props.routerClass ? 'routerGroup ' : 'routerGroup ' + this.props.routerClass
-      // const boxes_cls = !this.props.mulitple ? 'routerBoxes' : 'routerBoxes mulitple'
       const boxes_cls = !this.props.mulitple ? (this.props.animate == 'left' ? 'routerBoxes boxLeft' : this.props.animate == 'right' ? 'routerBoxes boxRight' : 'routerBoxes') : 'routerBoxes mulitple'
-
-      // const jsxMenu = this.saxer.get().MenuJsx
       const jsxMenu = this.createMenu()
 
       const content = this.getPage(boxes_cls)
