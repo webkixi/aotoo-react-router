@@ -16,6 +16,17 @@ function _os(ua) {
 
 let stat = true
 function once(cb) {
+  const id = this.saxer.get('__id')
+  const operateId = id + '_OPERATE'
+  const operate = this.saxer.get(operateId)
+  if (operate) {
+    if (operate == 'break') return   // continue will dealwith flow code
+    else {
+      this.saxer.set(operateId, 'break')
+    }
+  } else {
+    this.saxer.set(operateId, 'break')
+  }
   function next(params) {
     stat = true
   }
@@ -320,6 +331,10 @@ Aotoo.extend('router', function (opts, utile) {
     }
 
     getPage(boxCls) {
+      const xxid = this.saxer.get('__id')
+      const operateId = xxid + '_OPERATE'
+      const operate = this.saxer.get(operateId)
+
       const id = this.state.select;
       let pre, preId, prePage, preContent;
       let oriContent, content;
@@ -380,6 +395,10 @@ Aotoo.extend('router', function (opts, utile) {
       }
 
       lru.set(id, content)
+
+      if (operate == 'break') {
+        this.saxer.set(operateId, 'continue')
+      }
 
       if (prePage) {
         return [ prePage, curPage ]
@@ -477,7 +496,9 @@ Aotoo.extend('router', function (opts, utile) {
   }
 
   // const router = Aotoo(Tabs, Action, dft)
-  const router = Aotoo(Router, Action, dft)
+  let router = Aotoo(Router, Action, dft)
+  router.__id = _.uniqueId('ROUTER_ID_')
+  router.saxer.set('__id', router.__id)
   router.condition = {
     preback: 'preback'
   }
@@ -597,7 +618,7 @@ Aotoo.extend('router', function (opts, utile) {
     },
 
     goto: function (where, data) {
-      once( next => {
+      once.call(this, next => {
         setTimeout(() => {
           next()
         }, __opts.gap);
@@ -646,7 +667,7 @@ Aotoo.extend('router', function (opts, utile) {
     },
 
     back: function (where, data) {
-      once( next => {
+      once.call(this, next => {
         setTimeout(() => {
           next()
         }, __opts.gap);
