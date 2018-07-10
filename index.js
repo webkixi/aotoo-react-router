@@ -6,6 +6,73 @@ var _historyCount = 0
 var _leftStack = []
 var os
 
+Aotoo.inject.css(`
+  .progress-slot {
+    width: 100%;
+    height: 2px;
+    padding: 0;
+    margin: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 999;
+  }
+
+  .progress-stat {
+    background-color: #ccc;
+    width: 0;
+    height: 2px;
+    padding: 0;
+    margin: 0;
+    -webkit-transition: all .2s ease-in-out;
+    transition: all .2s ease-in-out;
+  }
+`)
+
+function ProgressFun(props) {
+  let _props = _.merge({}, props)
+  if (_props.style && _props.style.enable) delete _props.style.enable
+  return (
+    <div className="progress-slot">
+      <div className="progress-stat" style={_props.style||{width: '0'}}></div>
+    </div>
+  )
+}
+
+class ProgressClass extends React.Component {
+  constructor(props){
+    super(props)
+    this.state = {
+      width: this.props.width || {width: '0'},
+      opacity: '1',
+      backgroundColor: this.props.backgroundColor,
+      height: this.props.height,
+      enable: true
+    }
+  }
+  render(){
+    console.log(this.props.enable);
+    if (this.props.enable) {
+      return <ProgressFun style={this.state}/>
+    } else {
+      return <ProgressFun style={{height: '0'}}/>
+    }
+  }
+}
+
+const Progress = Aotoo(ProgressClass, {
+  WIDTH: function(ostate, opts) {
+    let state = this.curState
+    state.width = opts.width
+    return state
+  },
+  OPACITY: function (ostate, opts) {
+    let state = this.curState
+    state.opacity = opts.opacity
+    return state
+  }
+})
+
 function _os(ua) {
   var ret = {},
     android = ua.match(/(?:Android);?[\s\/]+([\d.]+)?/),
@@ -19,6 +86,7 @@ function once(cb) {
   const id = this.saxer.get('__id')
   const operateId = id + '_OPERATE'
   const operate = this.saxer.get(operateId)
+  Progress.$width({width: "70%"})
   if (operate) {
     if (operate == 'break') return   // continue will dealwith flow code
     else {
@@ -160,6 +228,10 @@ let __opts
 Aotoo.extend('router', function (opts, utile) {
   let dft = {
     storage: window.sessionStorage,
+    progress: {
+      backgroundColor: '#108ee9',
+      enable: true
+    },
     likeApp: false,   // 模仿app动画切换，保持2个页面, 置为false 可暂时停止prepage页面，提升性能
     gap: 100,   // 两次点击之间的间隙延时时间，防止click多次响应
     props: {
@@ -331,9 +403,9 @@ Aotoo.extend('router', function (opts, utile) {
     }
 
     getPage(boxCls) {
-      const xxid = this.saxer.get('__id')
-      const operateId = xxid + '_OPERATE'
-      const operate = this.saxer.get(operateId)
+      // const xxid = this.saxer.get('__id')
+      // const operateId = xxid + '_OPERATE'
+      // const operate = this.saxer.get(operateId)
 
       const id = this.state.select;
       let pre, preId, prePage, preContent;
@@ -396,9 +468,21 @@ Aotoo.extend('router', function (opts, utile) {
 
       lru.set(id, content)
 
-      if (operate == 'break') {
-        this.saxer.set(operateId, 'continue')
-      }
+      // if (operate == 'break') {
+      //   setTimeout(() => {
+      //     Progress.$width({width: "100%"})
+      //     setTimeout(() => {
+      //       Progress.$opacity({opacity: "0"})
+      //       setTimeout(() => {
+      //         Progress.$width({width: "0"})
+      //         setTimeout(() => {
+      //           Progress.$opacity({opacity: "1"})
+      //         }, 200);
+      //       }, 400);
+      //     }, 500);
+      //   }, 1000);
+      //   this.saxer.set(operateId, 'continue')
+      // }
 
       if (prePage) {
         return [ prePage, curPage ]
@@ -451,6 +535,7 @@ Aotoo.extend('router', function (opts, utile) {
 
       return (
         <div className={cls}>
+          <Progress.x {...opts.progress}/>
           {this.state.showMenu ? <IscrollTreeMenu /> : ''}
           {content}
         </div>
@@ -502,10 +587,50 @@ Aotoo.extend('router', function (opts, utile) {
   router.condition = {
     preback: 'preback'
   }
+  
+  router.on('rendered', function(params) {
+    const {context} = params
+    const xxid = context.saxer.get('__id')
+    const operateId = xxid + '_OPERATE'
+    const operate = context.saxer.get(operateId)
+
+    if (operate == 'break') {
+      setTimeout(() => {
+        Progress.$width({width: "100%"})
+        setTimeout(() => {
+          Progress.$opacity({opacity: "0"})
+          setTimeout(() => {
+            Progress.$width({width: "0"})
+            setTimeout(() => {
+              Progress.$opacity({opacity: "1"})
+              context.saxer.set(operateId, 'continue')
+            }, 200);
+          }, 100);
+        }, 100);
+      }, 500);
+    }
+  })
 
   router.saxer.append({
     InstanceContext: router
   })
+
+  router.progress = {
+    start: function(param) {
+      if (typeof param == 'object' && param.width) {
+        Progress.$width(param)
+      }
+    },
+    end: function(timeout=1000) {
+      Progress.$width({width: "100%"})
+      setTimeout(() => {
+        Progress.$opacity({opacity: "0"})
+        setTimeout(() => {
+          Progress.$width({width: "0"})
+        }, 300);
+      }, timeout);
+    }
+  }
 
   Popstate.on('__goback', function (param) {
     return router.back()
