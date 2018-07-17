@@ -51,7 +51,6 @@ class ProgressClass extends React.Component {
     }
   }
   render(){
-    console.log(this.props.enable);
     if (this.props.enable) {
       return <ProgressFun style={this.state}/>
     } else {
