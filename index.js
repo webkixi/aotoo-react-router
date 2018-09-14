@@ -95,13 +95,14 @@ function once(cb) {
       if (operate == 'break') return   // continue will dealwith flow code
       else {
         this.saxer.set(operateId, 'break')
-        setTimeout(() => {
-          this.saxer.set(operateId, 'continue')
-        }, 1000);
       }
     } else {
       this.saxer.set(operateId, 'break')
     }
+    setTimeout(() => {
+      this.saxer.set(operateId, 'continue')
+      stat = true
+    }, 1000);
     cb(next)
   }
 
