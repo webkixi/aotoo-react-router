@@ -81,24 +81,27 @@ function _os(ua) {
 }
 
 let stat = true
+function next(params) {
+  stat = true
+}
 function once(cb) {
-  const id = this.saxer.get('__id')
-  const operateId = id + '_OPERATE'
-  const operate = this.saxer.get(operateId)
-  Progress.$width({width: "70%"})
-  if (operate) {
-    if (operate == 'break') return   // continue will dealwith flow code
-    else {
-      this.saxer.set(operateId, 'break')
-    }
-  } else {
-    this.saxer.set(operateId, 'break')
-  }
-  function next(params) {
-    stat = true
-  }
   if (stat) {
     stat = false
+    const id = this.saxer.get('__id')
+    const operateId = id + '_OPERATE'
+    const operate = this.saxer.get(operateId)
+    Progress.$width({width: "70%"})
+    if (operate) {
+      if (operate == 'break') return   // continue will dealwith flow code
+      else {
+        this.saxer.set(operateId, 'break')
+        setTimeout(() => {
+          this.saxer.set(operateId, 'continue')
+        }, 1000);
+      }
+    } else {
+      this.saxer.set(operateId, 'break')
+    }
     cb(next)
   }
 
@@ -232,7 +235,7 @@ Aotoo.extend('router', function (opts, utile) {
       enable: true
     },
     likeApp: false,   // 模仿app动画切换，保持2个页面, 置为false 可暂时停止prepage页面，提升性能
-    gap: 100,   // 两次点击之间的间隙延时时间，防止click多次响应
+    gap: 300,   // 两次点击之间的间隙延时时间，防止click多次响应
     props: {
       routerClass: 'routerGroup',
       mulitple: false
