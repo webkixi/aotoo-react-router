@@ -1,3 +1,8 @@
+/**
+ * 参考
+ * 浏览器“ 后退”、“ 前进” 或可以这么去监听  http://seejs.me/2016/10/19/goback/
+ */
+
 import { Tabs } from 'aotoo-react-tabs'
 require('aotoo-mixins-iscroll')
 const Popstate = SAX('Popstate');
@@ -156,8 +161,42 @@ function once(cb) {
 
 function pushState(props, nohash) {
   const flag = props.flag ? (typeof props.flag == 'boolean' ? '#' : props.flag) : ''
-  const uri = flag ? props.rootUrl + flag + props.key : props.rootUrl
-  window.history.pushState(props, '', uri)
+  const init = props.init  // 是否是第一次触发
+  const instProps = props.config.props || {}
+  delete props.config
+
+  const rawurl = props.toggleUrl ? (()=>{
+    return !instProps.rawurl
+  })() : instProps.rawurl
+
+  // const uri = flag ? props.rootUrl + flag + props.key : props.rootUrl
+  const cleanUri = flag ? props.rootUrl + flag + props.key : props.rootUrl
+  const completeUri = init ? window.location.href : (()=>{
+    let query = ''
+    if (props.data && Aotoo.isPlainObject(props.data)) {
+      const datas = Object.keys(props.data)
+      if (datas.length) {
+        query = '?'
+        datas.forEach((key, ii)=>{
+          if (ii<datas.length) {
+            if (ii+1==datas.length) {
+              query += (key+"="+props.data[key])
+            } else {
+              query += (key+"="+props.data[key]+'&')
+            }
+          }
+        })
+      }
+    }
+    return cleanUri + query
+  })()
+  const uri = rawurl ? completeUri : cleanUri
+
+  if (init) {
+    if (!rawurl) window.history.pushState(props, '', uri)
+  } else {
+    window.history.pushState(props, '', uri)
+  }
 }
 
 function _lru(max) {
@@ -238,6 +277,7 @@ Aotoo.extend('router', function (opts, utile) {
     likeApp: false,   // 模仿app动画切换，保持2个页面, 置为false 可暂时停止prepage页面，提升性能
     gap: 300,   // 两次点击之间的间隙延时时间，防止click多次响应
     props: {
+      rawurl: false,  // 影响pushstat操作，true: 保持原始的url地址，false: 切换为精简版url地址。原始地址可以在url上显示query等参数
       routerClass: 'routerGroup',
       mulitple: false
     },
@@ -292,7 +332,9 @@ Aotoo.extend('router', function (opts, utile) {
         that.historyPush({
           index: historyItem.index,
           key: historyItem.path,
-          data: _data || {}
+          data: _data || {},
+          init: opts.init, // 第一次访问。当直接从url访问时，需不需要对window.history做操作
+          toggleUrl: opts.toggleUrl   // 通过goto, back方法手动控制pushstat地址干净与否
         })
       })
 
@@ -300,9 +342,32 @@ Aotoo.extend('router', function (opts, utile) {
         return that.historyPop(opts)
       })
 
+
+      // 第一次访问的数据来自url或者传递过来的selectData
+      const selectData = (()=>{
+        let query
+        let search = window.location.search
+        if (search) {
+          search = search.substring(1)
+          if (search.length) {
+            query = {}
+            search.split('&').forEach(function(item) {
+              const parts = item.split('=')
+              if (parts.length == 1) {
+                query[parts[0]] = true
+              } else {
+                query[parts[0]] = parts[1]
+              }
+            })
+          }
+          if (query) return query
+        }
+        return undefined
+      })() || this.state.selectData || {}
       this.emit('historypush', {
         path: this.state.select,
-        data: {}
+        data: selectData,
+        init: true
       })
     }
 
@@ -328,12 +393,17 @@ Aotoo.extend('router', function (opts, utile) {
           rootUrl: this.state.rootUrl,
           preState: curHistoryState,
           timeLine: _historyCount,
-          flag: this.state.flag
+          flag: this.state.flag,
+          config: this.config,
+          init: props.init,
+          toggleUrl: props.toggleUrl
         })
       } else {
         pushState({
           rootUrl: this.state.rootUrl,
-          flag: this.state.flag
+          flag: this.state.flag,
+          config: this.config,
+          init: props.init
         }, true)
       }
       const preState = _history[_history.length - 1]
@@ -362,12 +432,18 @@ Aotoo.extend('router', function (opts, utile) {
             data: rightState.data,
             rootUrl: this.state.rootUrl,
             preState: "curHistoryState",
-            flag: this.state.flag
+            flag: this.state.flag,
+            config: this.config,
           })
         }
       } else {
         rightState = _history.pop()
-        pushState({ rootUrl: this.state.rootUrl, flag: this.state.flag }, true)
+        pushState({ 
+          rootUrl: this.state.rootUrl, 
+          flag: this.state.flag,
+          config: this.config
+        }, 
+        true)
       }
 
       return rightState
@@ -571,7 +647,9 @@ Aotoo.extend('router', function (opts, utile) {
       if (state.direction == 'goto') {
         ctx.emit('historypush', {
           path: state.select,
-          data: state.selectData
+          data: state.selectData,
+          init: opts.init,
+          toggleUrl: opts.toggleUrl
         })
       }
 
@@ -678,7 +756,7 @@ Aotoo.extend('router', function (opts, utile) {
     },
     start: function (id, data) {
       if (this.hasMounted()) {
-        this.goto(id, data)
+        this.goto(id, data, {init: true})
       } else {
         if (this.config && this.config.props) {
           this.config.props.select = id
@@ -745,7 +823,7 @@ Aotoo.extend('router', function (opts, utile) {
       }
     },
 
-    goto: function (where, data) {
+    goto: function (where, data, opts={}) {
       once.call(this, next => {
         setTimeout(() => {
           next()
@@ -788,7 +866,9 @@ Aotoo.extend('router', function (opts, utile) {
           this.$select({
             select: target.index,
             selectData: data,
-            direction: 'goto'
+            direction: 'goto',
+            init: opts.init,   // 是否是第一次启动，从inst.start进入，第一次进入不会触发pushstat更改window.history状态
+            toggleUrl: opts.toggleUrl
           })
         }
       })
