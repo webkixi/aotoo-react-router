@@ -159,7 +159,7 @@ function once(cb) {
   }, false)
 }())
 
-function pushState(props, nohash) {
+function _pushState(props, nohash) {
   const flag = props.flag ? (typeof props.flag == 'boolean' ? '#' : props.flag) : ''
   const init = props.init  // 是否是第一次触发
   const instProps = props.config.props || {}
@@ -196,6 +196,18 @@ function pushState(props, nohash) {
     if (!rawurl) window.history.pushState(props, '', uri)
   } else {
     window.history.pushState(props, '', uri)
+  }
+}
+
+function pushState(props, nohash) {
+  if (props) {
+    if (props.direction && props.direction == 'back') {
+      delete props.config
+      const uri = props.href || props.rootUrl
+      window.history.pushState(props, '', uri)
+    } else {
+      _pushState(props, nohash)
+    }
   }
 }
 
@@ -383,6 +395,7 @@ Aotoo.extend('router', function (opts, utile) {
     }
 
     historyPush(props) {
+      const curHref = window.location.href
       if (this.state.flag) {
         const curHistoryState = window.history.state
         pushState({
@@ -413,6 +426,7 @@ Aotoo.extend('router', function (opts, utile) {
         path: props.key,
         data: props.data,
         preState: preState,
+        preHref: curHref,
         timeLine: _historyCount
       })
 
@@ -423,17 +437,21 @@ Aotoo.extend('router', function (opts, utile) {
       let state = _history.pop()
       if (!state) return false
       let rightState;
+      let rightHref
       if (this.state.flag) {
         rightState = (state && state.preState)
+        rightHref = (state && state.preHref)
         if (rightState) {
           pushState({
             index: rightState.index,
             key: rightState.key,
             data: rightState.data,
             rootUrl: this.state.rootUrl,
+            href: rightHref,
             preState: "curHistoryState",
             flag: this.state.flag,
             config: this.config,
+            direction: 'back'
           })
         }
       } else {
@@ -441,7 +459,8 @@ Aotoo.extend('router', function (opts, utile) {
         pushState({ 
           rootUrl: this.state.rootUrl, 
           flag: this.state.flag,
-          config: this.config
+          config: this.config,
+          direction: 'back'
         }, 
         true)
       }
@@ -949,7 +968,12 @@ Aotoo.extend('router', function (opts, utile) {
               selectData: utile.merge({}, whereBack.data, condition),
               direction: 'back'
             })
-            return whereBack
+            if (_history.length == 1) {
+              _history = []
+              _leftStack = []
+              history.back()
+            }
+            // return whereBack
           } else {
             if (window.history.length) {
               history.back()
