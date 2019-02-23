@@ -204,7 +204,7 @@ function pushState(props, nohash) {
     if (props.direction && props.direction == 'back') {
       delete props.config
       const uri = props.href || props.rootUrl
-      window.history.pushState(props, '', uri)
+      window.history.replaceState(props, '', uri)
     } else {
       _pushState(props, nohash)
     }
@@ -968,12 +968,12 @@ Aotoo.extend('router', function (opts, utile) {
               selectData: utile.merge({}, whereBack.data, condition),
               direction: 'back'
             })
-            if (_history.length == 1) {
-              _history = []
-              _leftStack = []
-              history.back()
-            }
-            // return whereBack
+            // if (_history.length == 1) {
+            //   _history = []
+            //   _leftStack = []
+            //   history.back()
+            // }
+            return whereBack
           } else {
             if (window.history.length) {
               history.back()
