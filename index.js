@@ -10,6 +10,18 @@ var _history = []
 var _historyCount = 0
 var _leftStack = []
 var os
+var _wr = function(type) {
+  var orig = window.history[type];
+  return function() {
+    var rv = orig.apply(this, arguments);
+    var e = new Event(type);
+    e.arguments = arguments;
+    window.dispatchEvent(e);
+    return rv;
+  };
+};
+window.history.replaceState = _wr('replaceState');
+// history.replaceState = _wr('pushState');
 
 Aotoo.inject.css(`
   .progress-slot {
@@ -157,6 +169,15 @@ function once(cb) {
       anchorHash = false
     }
   }, false)
+
+  window.addEventListener('replaceState', function(e) {
+    let lastItem = _history[(_history.length-1)] 
+    if (lastItem.preState) {
+      lastItem.preState.preHref = window.location.href
+    } else {
+      lastItem.preHref = window.location.href
+    }
+  });
 }())
 
 function _pushState(props, nohash) {
@@ -440,7 +461,8 @@ Aotoo.extend('router', function (opts, utile) {
       let rightHref
       if (this.state.flag) {
         rightState = (state && state.preState)
-        rightHref = (state && state.preHref)
+        // rightHref = (state && state.preHref)Z
+        rightHref = (state && state.preState.preHref)
         if (rightState) {
           pushState({
             index: rightState.index,
