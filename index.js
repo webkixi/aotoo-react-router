@@ -10,17 +10,17 @@ var _history = []
 var _historyCount = 0
 var _leftStack = []
 var os
-var _wr = function(type) {
-  var orig = window.history[type];
-  return function() {
-    var rv = orig.apply(this, arguments);
-    var e = new Event(type);
-    e.arguments = arguments;
-    window.dispatchEvent(e);
-    return rv;
-  };
-};
-window.history.replaceState = _wr('replaceState');
+// var _wr = function(type) {
+//   var orig = window.history[type];
+//   return function() {
+//     var rv = orig.apply(this, arguments);
+//     var e = new Event(type);
+//     e.arguments = arguments;
+//     window.dispatchEvent(e);
+//     return rv;
+//   };
+// };
+// window.history.replaceState = _wr('replaceState');
 // history.replaceState = _wr('pushState');
 
 Aotoo.inject.css(`
@@ -170,14 +170,24 @@ function once(cb) {
     }
   }, false)
 
-  window.addEventListener('replaceState', function(e) {
-    let lastItem = _history[(_history.length-1)] 
-    if (lastItem.preState) {
-      lastItem.preState.preHref = window.location.href
-    } else {
-      lastItem.preHref = window.location.href
-    }
-  });
+  // window.addEventListener('replaceState', function(e) {
+  //   const argu = e.arguments
+  //   console.log(JSON.stringify(_history))
+  //   if (argu && argu.length) {
+  //     const props = argu[0]
+  //     if (argu[0] == 't') {
+  //       /** do something */
+  //     } else {
+  //       console.log(11111111)
+  //       let lastItem = _history[(_history.length-1)] 
+  //       if (lastItem.preState) {
+  //         lastItem.preState.preHref = window.location.href
+  //       } else {
+  //         lastItem.preHref = window.location.href
+  //       }
+  //     }
+  //   }
+  // });
 }())
 
 function _pushState(props, nohash) {
@@ -778,6 +788,23 @@ Aotoo.extend('router', function (opts, utile) {
   }
 
   router.extend({
+    // history: function(param){
+    //   if (param) {
+    //     _history = param
+    //   } else {
+    //     return _history
+    //   }
+    // },
+    replaceState: function (uri) {
+      
+      let lastItem = _history[(_history.length-1)] 
+      if (lastItem.preState) {
+        lastItem.preState.preHref = uri || window.location.href
+      } else {
+        lastItem.preHref = uri || window.location.href
+      }
+      console.log(_history)
+    },
     getWhereInfo: function (where) {
       const menu_data = this.saxer.get().MenuData
       return utile.find(menu_data, { path: where })
