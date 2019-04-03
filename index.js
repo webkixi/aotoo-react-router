@@ -9,6 +9,7 @@ const Popstate = SAX('Popstate');
 var _history = []
 var _historyCount = 0
 var _leftStack = []
+var _restoreStat = false
 var os
 // var _wr = function(type) {
 //   var orig = window.history[type];
@@ -407,11 +408,14 @@ Aotoo.extend('router', function (opts, utile) {
         }
         return undefined
       })() || this.state.selectData || {}
-      this.emit('historypush', {
-        path: this.state.select,
-        data: selectData,
-        init: true
-      })
+      if (!_restoreStat) {
+        this.emit('historypush', {
+          path: this.state.select,
+          data: selectData,
+          init: true
+        })
+      }
+      _restoreStat = false
     }
 
     findPath(where) {
@@ -471,8 +475,8 @@ Aotoo.extend('router', function (opts, utile) {
       let rightHref
       if (this.state.flag) {
         rightState = (state && state.preState)
-        // rightHref = (state && state.preHref)Z
-        rightHref = (state && state.preState.preHref)
+        rightHref = (state && state.preHref)
+        // rightHref = (state && state.preState.preHref)
         if (rightState) {
           pushState({
             index: rightState.index,
@@ -803,7 +807,6 @@ Aotoo.extend('router', function (opts, utile) {
       } else {
         lastItem.preHref = uri || window.location.href
       }
-      console.log(_history)
     },
     getWhereInfo: function (where) {
       const menu_data = this.saxer.get().MenuData
@@ -866,13 +869,19 @@ Aotoo.extend('router', function (opts, utile) {
         // sessName = name + '_' + this.globalName
         sessName = name
         if (dft.storage[sessName]) {
+          _restoreStat = true
           const sessData = JSON.parse(dft.storage[sessName])
           dft.storage.removeItem(sessName)
 
           if (sessData.history.length) {
+            // var cur = {
+            //   page: sessData.history.pop(),
+            //   stack: sessData.stack.pop()
+            // }
+
             var cur = {
-              page: sessData.history.pop(),
-              stack: sessData.stack.pop()
+              page: sessData.history[sessData.history.length-1],
+              stack: sessData.stack[sessData.stack.length-1]
             }
 
             _history = sessData.history
