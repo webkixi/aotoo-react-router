@@ -900,7 +900,7 @@ Aotoo.extend('router', function (opts, utile) {
       }
     },
 
-    goto: function (where, data, opts={}) {
+    goto: function (where, data={}, opts={}) {
       once.call(this, next => {
         setTimeout(() => {
           next()
@@ -928,7 +928,7 @@ Aotoo.extend('router', function (opts, utile) {
 
           param: {
             path: where,
-            data: data
+            data: (data === 'origin' ? undefined : data)
           },
 
           setHistory: this.setHistory
