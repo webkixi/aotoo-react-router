@@ -660,10 +660,10 @@ Aotoo.extend('router', function (opts, utile) {
       const cls = !this.props.routerClass ? 'routerGroup ' : 'routerGroup ' + this.props.routerClass
       const boxes_cls = !this.props.mulitple ? (this.props.animate == 'left' ? 'routerBoxes boxLeft' : this.props.animate == 'right' ? 'routerBoxes boxRight' : 'routerBoxes') : 'routerBoxes mulitple'
       const jsxMenu = this.createMenu()
-
+      
       const content = this.getPage(boxes_cls)
       const IscrollTreeMenu = Aotoo.iscroll(
-        <div className='routerMenus'>{jsxMenu}</div>, 
+        <div className='routerMenus'>{props.treeHeader}{jsxMenu}{props.treeFooter}</div>, 
         opts.iscrollConfig
       )
 
