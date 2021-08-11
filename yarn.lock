@@ -43,9 +43,11 @@ aotoo-mixins-iscroll@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/aotoo-mixins-iscroll/-/aotoo-mixins-iscroll-1.0.4.tgz#c44a9d646f03334ac7b3d0be82f6a718c324dbf5"
 
-aotoo-react-tabs@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/aotoo-react-tabs/-/aotoo-react-tabs-1.0.0.tgz#8fc88f69e1e347eb52b8becb46c5d9961c26af61"
+aotoo-react-tabs@^1.0.6:
+  version "1.0.19"
+  resolved "https://registry.yarnpkg.com/aotoo-react-tabs/-/aotoo-react-tabs-1.0.19.tgz#789dcfff4c0c1345238b8b43bde68e3eeceaa0b7"
+  dependencies:
+    iscroll "^5.2.0"
 
 archy@^1.0.0:
   version "1.0.0"
@@ -1403,6 +1405,10 @@ isarray@1.0.0, isarray@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/isarray/-/isarray-1.0.0.tgz#bb935d48582cba168c06834957a54a3e07124f11"
 
+iscroll@^5.2.0:
+  version "5.2.0"
+  resolved "https://registry.yarnpkg.com/iscroll/-/iscroll-5.2.0.tgz#d513307088b5b25a4f893af474804468481829c8"
+
 isexe@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/isexe/-/isexe-2.0.0.tgz#e8fbf374dc556ff8947a10dcb0572d633f2cfa10"
@@ -1780,8 +1786,8 @@ path-is-absolute@^1.0.0:
   resolved "https://registry.yarnpkg.com/path-is-absolute/-/path-is-absolute-1.0.1.tgz#174b9268735534ffbc7ace6bf53a5a9e1b5c5f5f"
 
 path-parse@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/path-parse/-/path-parse-1.0.5.tgz#3c1adf871ea9cd6c9431b6ea2bd74a0ff055c4c1"
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/path-parse/-/path-parse-1.0.7.tgz#fbc114b60ca42b30d9daf5858e4bd68bbedb6735"
 
 path-root-regex@^0.1.0:
   version "0.1.2"
